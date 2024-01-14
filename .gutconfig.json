@@ -1,0 +1,10 @@
+{
+  "dirs": [
+    "res://test"
+  ],
+  "prefix": "",
+  "suffix": ".test.gd",
+  "include_subdirs": true,
+  "log_level": 1,
+  "should_exit": true
+}

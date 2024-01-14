@@ -8,3 +8,9 @@ export_presets.cfg
 # Scatter-specific ignores
 addons/proton_scatter/cache/
 tmp/
+
+# gd-plug
+.plugged/
+addons/*
+!addons/gd-plug/
+!addons/proton_scatter/
