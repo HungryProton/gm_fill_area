@@ -28,6 +28,7 @@ class DomainShapeInfo:
 			return shape.is_point_inside(point, t)
 		else:
 			return false	
+	
 	func get_corners_global() -> Array:
 		return shape.get_corners_global(node.get_global_transform())
 
