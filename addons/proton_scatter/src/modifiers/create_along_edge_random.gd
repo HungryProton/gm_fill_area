@@ -2,6 +2,8 @@
 extends "base_modifier.gd"
 
 
+const MAX_TRIES := 100
+
 @export var instance_count := 10
 @export var align_to_path := false
 @export var align_up_axis := Vector3.UP
@@ -38,7 +40,9 @@ func _process_transforms(transforms, domain, random_seed) -> void:
 		var local_instance_count: int = round((length / total_curve_length) * instance_count)
 
 		for i in local_instance_count:
-			var data = get_pos_and_normal(curve, _rng.randf() * length)
+			var data = get_pos_and_normal(domain, curve, _rng.randf() * length)
+			if data.is_empty():
+				break
 			var pos: Vector3 = data[0]
 			var normal: Vector3 = data[1]
 			var t := Transform3D()
@@ -54,16 +58,22 @@ func _process_transforms(transforms, domain, random_seed) -> void:
 	transforms.append(new_transforms)
 
 
-func get_pos_and_normal(curve: Curve3D, offset : float) -> Array:
-	var pos: Vector3 = curve.sample_baked(offset)
-	var normal := Vector3.ZERO
+func get_pos_and_normal(domain, curve: Curve3D, offset : float) -> Array:
+	var i := 0
+	while i < MAX_TRIES:
+		i += 1
+		var pos: Vector3 = curve.sample_baked(offset)
+		if domain.is_point_excluded(pos):
+			continue
+		var normal := Vector3.ZERO
 
-	var pos1
-	if offset + curve.get_bake_interval() < curve.get_baked_length():
-		pos1 = curve.sample_baked(offset + curve.get_bake_interval())
-		normal = (pos1 - pos)
-	else:
-		pos1 = curve.sample_baked(offset - curve.get_bake_interval())
-		normal = (pos - pos1)
+		var pos1
+		if offset + curve.get_bake_interval() < curve.get_baked_length():
+			pos1 = curve.sample_baked(offset + curve.get_bake_interval())
+			normal = (pos1 - pos)
+		else:
+			pos1 = curve.sample_baked(offset - curve.get_bake_interval())
+			normal = (pos - pos1)
 
-	return [pos, normal]
+		return [pos, normal]
+	return []

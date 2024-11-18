@@ -212,6 +212,8 @@ static func request_parent_to_rebuild(node: Node, deferred := true) -> void:
 	if parent and parent is ProtonScatter:
 		if not parent.is_ready:
 			return
+		if not parent.enable_updates_in_game and not Engine.is_editor_hint():
+			return
 
 		if deferred:
 			parent.rebuild.call_deferred(true)
