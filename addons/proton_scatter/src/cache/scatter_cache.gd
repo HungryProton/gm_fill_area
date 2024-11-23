@@ -24,9 +24,17 @@ signal cache_restored
 	set(val):
 		cache_file = val
 		update_configuration_warnings()
+
+
+## Determines whether the cache should be automatically updated when the scene is saved.
+## If this is set to off, you will need to manually use the Update Cache button to ensure the
+## cache is up-to-date.
 @export var auto_rebuild_cache_when_saving := true
 
 @export_group("Debug", "dbg_")
+
+## This parameter is primarily intended for debugging purposes, as loading large cache
+## files on the main thread can cause the editor to become unresponsive.
 @export var dbg_disable_thread := false
 
 # The resource where transforms are actually stored
