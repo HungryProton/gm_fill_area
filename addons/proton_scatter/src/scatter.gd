@@ -107,8 +107,15 @@ var modifier_stack: ProtonScatterModifierStack:
 				modifier_stack.stack_changed.disconnect(rebuild)
 			if modifier_stack.transforms_ready.is_connected(_on_transforms_ready):
 				modifier_stack.transforms_ready.disconnect(_on_transforms_ready)
-
-		modifier_stack = val.get_copy() # Enfore uniqueness
+		if not val:
+			modifier_stack = null
+			return
+		# Enforce uniqueness if the stack is in used by another Scatter node
+		if val.parent and val.parent != self:
+			modifier_stack = val.get_copy()
+		else:
+			modifier_stack = val
+		modifier_stack.parent = self
 		modifier_stack.value_changed.connect(rebuild, CONNECT_DEFERRED)
 		modifier_stack.stack_changed.connect(rebuild, CONNECT_DEFERRED)
 		modifier_stack.transforms_ready.connect(_on_transforms_ready, CONNECT_DEFERRED)
@@ -154,7 +161,7 @@ func _exit_tree():
 		modifier_stack.stop_update()
 		_thread.wait_to_finish()
 		_thread = null
-	
+
 	_clear_collision_data()
 
 
@@ -294,7 +301,7 @@ func full_rebuild():
 	if is_thread_running():
 		await _thread.wait_to_finish()
 		_thread = null
-	
+
 	clear_output()
 	_rebuild(true)
 
@@ -427,7 +434,7 @@ func _update_split_multimeshes() -> void:
 		var root: Node3D = ProtonScatterUtil.get_or_create_item_root(item)
 		if not is_instance_valid(root):
 			continue
-		
+
 		# use count number of transforms for this item
 		var count = int(round(float(item.proportion) / total_item_proportion * transforms_count))
 
@@ -469,9 +476,9 @@ func _update_split_multimeshes() -> void:
 					if chunk_elements == 0:
 						continue
 					var mmi = ProtonScatterUtil.get_or_create_multimesh_chunk(
-													item, 
-													mesh_instance, 
-													Vector3i(xi, yi, zi), 
+													item,
+													mesh_instance,
+													Vector3i(xi, yi, zi),
 													chunk_elements)
 					if not mmi:
 						continue
@@ -727,7 +734,7 @@ func _on_transforms_ready(new_transforms: ProtonScatterTransformList) -> void:
 
 	update_gizmos()
 	build_version += 1
-	
+
 	if is_inside_tree():
 		await get_tree().process_frame
 
