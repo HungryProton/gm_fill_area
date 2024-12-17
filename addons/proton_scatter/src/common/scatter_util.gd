@@ -102,6 +102,7 @@ static func get_or_create_multimesh(item: ProtonScatterItem, count: int) -> Mult
 	mmi.layers = item.visibility_layers
 
 	mmi.multimesh.instance_count = count
+	copy_instance_shader_parameters(mesh_instance, mmi)
 
 	mesh_instance.queue_free()
 
@@ -146,6 +147,7 @@ static func get_or_create_multimesh_chunk(item: ProtonScatterItem,
 	mmi.layers = item.visibility_layers
 
 	mmi.multimesh.instance_count = count
+	copy_instance_shader_parameters(mesh_instance, mmi)
 
 	return mmi
 
@@ -285,6 +287,7 @@ static func get_merged_meshes_from(item: ProtonScatterItem) -> MeshInstance3D:
 	if mesh_instances.size() == 1:
 		# Duplicate the meshinstance, not the mesh resource
 		var mi: MeshInstance3D = mesh_instances[0].duplicate()
+		copy_instance_shader_parameters(mesh_instances[0], mi)
 
 		# MI uses a material override, all surface materials will be ignored
 		if mi.material_override:
@@ -298,7 +301,6 @@ static func get_merged_meshes_from(item: ProtonScatterItem) -> MeshInstance3D:
 		# If there's one material override or less, no duplicate mesh is required.
 		if surface_overrides_count <= 1:
 			return mi
-
 
 	# Helper lambdas
 	var get_material_for_surface = func (mi: MeshInstance3D, idx: int) -> Material:
@@ -490,3 +492,20 @@ static func set_visibility_layers(node: Node, layers: int) -> void:
 		node.layers = layers
 	for child in node.get_children():
 		set_visibility_layers(child, layers)
+
+
+## This assumes both instances shares the same uniforms, but doesn't actually
+## check if the copy is valid or not.
+static func copy_instance_shader_parameters(source: GeometryInstance3D, target: GeometryInstance3D) -> void:
+	const SHADER_PARAMETER_PREFIX := &"instance_shader_parameters/"
+	for property: Dictionary in source.get_property_list():
+		var p_name: String = property["name"]
+		if not p_name.begins_with(SHADER_PARAMETER_PREFIX):
+			continue
+		var uniform_name: String = p_name.trim_prefix(SHADER_PARAMETER_PREFIX)
+		if uniform_name.is_empty():
+			continue
+		var value: Variant = source.get_instance_shader_parameter(uniform_name)
+		if value == null:
+			continue
+		target.set_instance_shader_parameter(uniform_name, value)
