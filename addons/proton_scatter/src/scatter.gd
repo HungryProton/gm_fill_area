@@ -34,6 +34,7 @@ const ProtonScatterUtil := preload('./common/scatter_util.gd')
 		show_output_in_tree = val
 		if output_root:
 			ProtonScatterUtil.enforce_output_root_owner(self)
+@export var multiplayer_sync := false
 
 @export_group("Performance")
 @export_enum("Use Instancing:0",
@@ -261,8 +262,20 @@ func is_thread_running() -> bool:
 func get_physics_helper() -> ProtonScatterPhysicsHelper:
 	return _physics_helper
 
+func _multiplayer_call(fn: Callable, arg = null):
+	if multiplayer_sync && is_multiplayer_authority() && !Engine.is_editor_hint():
+		if arg != null:
+			fn.rpc(arg)
+		else:
+			fn.rpc()
+	else:
+		if arg != null:
+			fn.call(arg)
+		else:
+			fn.call()
 
 # Deletes what the Scatter node generated.
+@rpc("call_local", "reliable")
 func clear_output() -> void:
 	if not output_root:
 		output_root = get_node_or_null("ScatterOutput")
@@ -275,7 +288,7 @@ func clear_output() -> void:
 	ProtonScatterUtil.ensure_output_root_exists(self)
 	_clear_collision_data()
 
-
+@rpc("call_local", "reliable")
 func _clear_collision_data() -> void:
 	if _body_rid.is_valid():
 		PhysicsServer3D.free_rid(_body_rid)
@@ -302,7 +315,7 @@ func full_rebuild():
 		await _thread.wait_to_finish()
 		_thread = null
 
-	clear_output()
+	_multiplayer_call(clear_output)
 	_rebuild(true)
 
 
@@ -330,8 +343,8 @@ func rebuild(force_discover := false) -> void:
 # DON'T call this function directly outside of the 'rebuild()' function above.
 func _rebuild(force_discover) -> void:
 	if not enabled:
-		_clear_collision_data()
-		clear_output()
+		_multiplayer_call(_clear_collision_data)
+		_multiplayer_call(clear_output)
 		build_completed.emit()
 		return
 
@@ -342,15 +355,15 @@ func _rebuild(force_discover) -> void:
 		domain.discover_shapes(self)
 
 	if items.is_empty() or (domain.is_empty() and not modifier_stack.does_not_require_shapes()):
-		clear_output()
+		_multiplayer_call(clear_output)
 		push_warning("ProtonScatter warning: No items or shapes, abort")
 		return
 
 	if render_mode == 1:
-		clear_output() # TMP, prevents raycasts in modifier to self intersect with previous output
+		_multiplayer_call(clear_output) # TMP, prevents raycasts in modifier to self intersect with previous output
 
 	if keep_static_colliders:
-		_clear_collision_data()
+		_multiplayer_call(_clear_collision_data)
 
 	if dbg_disable_thread:
 		modifier_stack.start_update(self, domain)
@@ -700,12 +713,17 @@ func _on_child_exiting_tree(node: Node) -> void:
 	if node is ProtonScatterShape or node is ProtonScatterItem:
 		rebuild.bind(true).call_deferred()
 
-
 # Called when the modifier stack is done generating the full transform list
 func _on_transforms_ready(new_transforms: ProtonScatterTransformList) -> void:
 	if is_thread_running():
 		await _thread.wait_to_finish()
 		_thread = null
+	_multiplayer_call(_do_transforms_ready, new_transforms.list)
+
+@rpc("call_local", "reliable")
+func _do_transforms_ready(new_trs: Array):
+	var new_transforms = ProtonScatterTransformList.new()
+	new_transforms.list.assign(new_trs)
 
 	_clear_collision_data()
 
