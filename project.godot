@@ -23,6 +23,7 @@ config/icon="res://icon.svg"
 [debug]
 
 gdscript/warnings/exclude_addons=false
+gdscript/warnings/native_method_override=1
 
 [display]
 
@@ -31,7 +32,7 @@ window/size/viewport_height=720
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/proton_scatter/plugin.cfg")
+enabled=PackedStringArray("res://addons/gut/plugin.cfg", "res://addons/proton_scatter/plugin.cfg")
 
 [rendering]
 

@@ -77,6 +77,20 @@ https://user-images.githubusercontent.com/52043844/232786762-330314a9-bc8a-49f4-
 
 ![image](https://user-images.githubusercontent.com/52043844/232790457-bbb96ae9-42ed-4587-800a-c945d59426db.png)
 
+## Developing
+
+If you cloned this repo locally and want to work on it you will need to install the plugins using the following command to install additional plugins:
+
+```
+godot --headless --script plug.gd install
+```
+
+### Testing
+
+Scatter uses the [Gut](https://github.com/bitwes/Gut) tool for testing. These tests can be run from the command line using:
+```
+godot --headless --script addons/gut/gut_cmdln.gd
+```
 
 ## License
 
