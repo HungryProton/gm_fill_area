@@ -8,3 +8,4 @@ export_presets.cfg
 # Scatter-specific ignores
 addons/proton_scatter/cache/
 tmp/
+*.import
