@@ -81,6 +81,15 @@ static func get_or_create_multimesh(item: ProtonScatterItem, count: int) -> Mult
 		mmi.set_owner(item_root.owner)
 	if not mmi.multimesh:
 		mmi.multimesh = MultiMesh.new()
+		if item.custom_script:
+			mmi.multimesh.use_colors = true
+			mmi.multimesh.use_custom_data = true
+			mmi.set_script(item.custom_script)
+	elif not item.custom_script:
+		# We should reset the use_* props of the multimesh, which fails if instance_count > 0. 
+		mmi.multimesh.instance_count = 0
+		mmi.multimesh.use_colors = false
+		mmi.multimesh.use_custom_data = false
 
 	var mesh_instance: MeshInstance3D = get_merged_meshes_from(item)
 	if not mesh_instance:
@@ -130,6 +139,15 @@ static func get_or_create_multimesh_chunk(item: ProtonScatterItem,
 
 	if not mmi.multimesh:
 		mmi.multimesh = MultiMesh.new()
+		if item.custom_script:
+			mmi.multimesh.use_colors = true
+			mmi.multimesh.use_custom_data = true
+			mmi.set_script(item.custom_script)
+	elif not item.custom_script:
+		# We should reset the use_* props of the multimesh, which fails if instance_count > 0. 
+		mmi.multimesh.instance_count = 0
+		mmi.multimesh.use_colors = false
+		mmi.multimesh.use_custom_data = false
 
 	mmi.position = Vector3.ZERO
 	mmi.material_override = get_final_material(item, mesh_instance)
